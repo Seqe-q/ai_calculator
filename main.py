@@ -2,7 +2,7 @@
 import speech_recognition as sr   #захват речи в текст
 import pyttsx3             #текст в речь      
 import sys                     
-def init_engine(): #настройка речи
+def speech_engine(): #настройка речи
     engine = pyttsx3.init() #движок речи
     voices = engine.getProperty('voices')
     russian_voice = None
@@ -18,6 +18,7 @@ def speak(engine, text): #произнос текста
     print(f"[Голос]: {text}")
     engine.say(text)
     engine.runAndWait()
+
 def format_result(value):
     if isinstance(value, float):
         if value.is_integer():
@@ -30,7 +31,7 @@ def format_result(value):
     return str(value)
 def calculate(tokens):
     
-    if not tokens or len(tokens) % 2 == 0:
+    if not tokens or len(tokens) % 2 == 0: 
         return None
     if not isinstance(tokens[0], (int, float)):
         return None
@@ -55,8 +56,6 @@ def calculate(tokens):
             processed.append(op)
             processed.append(next_val)
         i += 2
-
-    
     result = processed[0]
     i = 1
     while i < len(processed):
@@ -71,3 +70,46 @@ def calculate(tokens):
         i += 2
 
     return result
+def parse_voice_input(text): #парсинг речи
+    
+    clean_text = text.lower()
+    for prefix in ["посчитай", "посчитать"]: #оставили ток выражение
+        if clean_text.startswith(prefix):
+            clean_text = clean_text[len(prefix):].strip()
+            break
+    
+    words = clean_text.split()
+    tokens = [] 
+    i = 0
+
+    word_to_op = {
+        'плюс': '+', 'минус': '-', 'умножить': '*', 'разделить': '/','+': '+', '-': '-', '*': '*', '/': '/', 'x': '*', 'х': '*'   }
+
+    while i < len(words):
+        word = words[i]
+
+        try:
+            num_str = word.replace(',', '.')  # "1,5" → "1.5"
+            tokens.append(float(num_str))
+            i += 1
+            continue
+        except ValueError:
+            pass
+
+        if word == "умножить" and i + 1 < len(words) and words[i + 1] == "на":
+            tokens.append('*')
+            i += 2
+            continue
+        if word == "разделить" and i + 1 < len(words) and words[i + 1] == "на":
+            tokens.append('/')
+            i += 2
+            continue
+
+        if word in word_to_op:
+            tokens.append(word_to_op[word])
+            i += 1
+            continue
+        i += 1
+
+    return tokens
+
