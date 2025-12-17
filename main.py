@@ -1,7 +1,8 @@
 #pip install SpeechRecognition pyttsx3 pyaudiopip install SpeechRecognition pyttsx3 pyaudio
 import speech_recognition as sr   #захват речи в текст
 import pyttsx3             #текст в речь      
-import sys                     
+import sys             
+     
 def speech_engine(): #настройка речи
     engine = pyttsx3.init() #движок речи
     voices = engine.getProperty('voices')
@@ -81,7 +82,7 @@ def parse_voice_input(text): #парсинг речи
     words = clean_text.split()
     tokens = [] 
     i = 0
-
+    #словарь
     word_to_op = {
         'плюс': '+', 'минус': '-', 'умножить': '*', 'разделить': '/','+': '+', '-': '-', '*': '*', '/': '/', 'x': '*', 'х': '*'   }
 
@@ -95,7 +96,7 @@ def parse_voice_input(text): #парсинг речи
             continue
         except ValueError:
             pass
-
+#преобразование  фраз 
         if word == "умножить" and i + 1 < len(words) and words[i + 1] == "на":
             tokens.append('*')
             i += 2
@@ -105,11 +106,11 @@ def parse_voice_input(text): #парсинг речи
             i += 2
             continue
 
-        if word in word_to_op:
+        if word in word_to_op: 
             tokens.append(word_to_op[word])
             i += 1
             continue
-        i += 1
+        i += 1 #игнорирование непонятных слов 
 
     return tokens
 
@@ -118,20 +119,20 @@ def main():
     tts_engine = speech_engine()
     
     speak(tts_engine, "Голосовой калькулятор запущен слушаю вас")
-
+#бескон цикл / слушаем пользователя 
     try:
         while True:
             with sr.Microphone() as source:
                 speak(tts_engine, "Говорите...")
                 try:
                     audio = recognizer.listen(source, timeout=6, phrase_time_limit=8)
-                    user_input = recognizer.recognize_google(audio, language='ru-RU')
+                    user_input = recognizer.recognize_google(audio, language='ru-RU') # гугл 
                     print(f"[Вы сказали]: {user_input}")
                 except:
                     speak(tts_engine, "Не удалось распознать речь. Повторите.")
                     continue
 
-            
+            #остановка программы 
             input_words = user_input.lower().split()
             exit_keywords = ["всё", "все", "стоп", "хватит", "выход", "остановись"]
             if any(word in exit_keywords for word in input_words):
@@ -139,12 +140,12 @@ def main():
                 break
 
 
-            
+            #проверка на фразу  
             if not ("посчитай" in user_input.lower() or "посчитать" in user_input.lower()):
                 speak(tts_engine, "Пожалуйста, начните фразу со слова «посчитай».")
                 continue
 
-            
+            #парсинг 
             tokens = parse_voice_input(user_input)
             if not tokens or not isinstance(tokens[0], (int, float)):
                 speak(tts_engine, "Не удалось распознать числа в выражении")
@@ -152,7 +153,7 @@ def main():
 
             result = calculate(tokens)
 
-            # Озвучка результата
+            #озвучка результата
             if result == "деление на ноль":
                 speak(tts_engine, "Ошибка деление на ноль невозможно")
             elif result is None:
