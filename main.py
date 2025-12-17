@@ -113,3 +113,60 @@ def parse_voice_input(text): #парсинг речи
 
     return tokens
 
+def main():
+    recognizer = sr.Recognizer()
+    tts_engine = speech_engine()
+    
+    speak(tts_engine, "Голосовой калькулятор запущен слушаю вас")
+
+    try:
+        while True:
+            with sr.Microphone() as source:
+                speak(tts_engine, "Говорите...")
+                try:
+                    audio = recognizer.listen(source, timeout=6, phrase_time_limit=8)
+                    user_input = recognizer.recognize_google(audio, language='ru-RU')
+                    print(f"[Вы сказали]: {user_input}")
+                except:
+                    speak(tts_engine, "Не удалось распознать речь. Повторите.")
+                    continue
+
+            
+            input_words = user_input.lower().split()
+            exit_keywords = ["всё", "все", "стоп", "хватит", "выход", "остановись"]
+            if any(word in exit_keywords for word in input_words):
+                speak(tts_engine, "Завершаю работу. До свидания!")
+                break
+
+
+            
+            if not ("посчитай" in user_input.lower() or "посчитать" in user_input.lower()):
+                speak(tts_engine, "Пожалуйста, начните фразу со слова «посчитай».")
+                continue
+
+            
+            tokens = parse_voice_input(user_input)
+            if not tokens or not isinstance(tokens[0], (int, float)):
+                speak(tts_engine, "Не удалось распознать числа в выражении")
+                continue
+
+            result = calculate(tokens)
+
+            # Озвучка результата
+            if result == "деление на ноль":
+                speak(tts_engine, "Ошибка деление на ноль невозможно")
+            elif result is None:
+                speak(tts_engine, "Некорректное выражение")
+            else:
+                result_str = format_result(result)
+                speak(tts_engine, f"Результат: {result_str}")
+
+    except KeyboardInterrupt:
+        speak(tts_engine, "Принудительное завершение.")
+
+    finally:
+        tts_engine.stop()
+        sys.exit(0)
+
+
+main()
